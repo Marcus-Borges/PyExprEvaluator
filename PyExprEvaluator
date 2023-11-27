@@ -1,5 +1,5 @@
 # Define uma lista de operadores suportados
-OPERATORS = ['+', '-', '*', '/', '(', ')', ';', '**']
+OPERATORS = ['+', '-', '*', '/', '(', ')', ';', '**', 'u-']  # Adiciona 'u-' para o operador unário '-'
 
 # Função para análise léxica (tokenização)
 def lexer(expression):
@@ -21,6 +21,9 @@ def lexer(expression):
                 # Verifica se o próximo caractere forma um operador de dois caracteres
                 if i + 1 < len(expression) and expression[i:i+2] in OPERATORS:
                     tokens.append(('OPERATOR', expression[i:i+2]))  # Adiciona o operador de dois caracteres
+                    i += 1  # Pula o próximo caractere
+                elif i + 1 < len(expression) and expression[i:i+2] == '- ':  # Se o próximo caractere é um espaço após um '-'
+                    tokens.append(('OPERATOR', 'u-'))  # Adiciona o operador unário '-'
                     i += 1  # Pula o próximo caractere
                 else:
                     tokens.append(('OPERATOR', char))  # Adiciona o operador de um caractere
@@ -46,21 +49,24 @@ def parser(tokens):
                 if token[1] in ['(', ')']:  # Se o operador é um parêntese
                     parentheses.append(token[1])  # Adiciona o parêntese à lista de parênteses
                 elif i+1 >= len(tokens) or tokens[i+1][0] != 'NUMBER':  # Se não há próximo token ou o próximo token não é um número
-                    raise SyntaxError("Erro de sintaxe: número esperado")  # Levanta um erro de sintaxe
+                    if token[1] != 'u-':  # Se o operador não é o operador unário '-'
+                        raise SyntaxError("Erro de sintaxe: número esperado")  # Levanta um erro de sintaxe
             else:  # Se o operador não está na lista de operadores suportados
                 raise SyntaxError("Erro de sintaxe: operador inválido")  # Levanta um erro de sintaxe
-    if parentheses.count('(') != parentheses.count(')'):  # Se o número de parênteses abertos não é igual ao número de parênteses fechados
+    if parentheses.count('(') != parentheses.count(')'):
         raise SyntaxError("Erro de sintaxe: parênteses desequilibrados")  # Levanta um erro de sintaxe
     return True  # Retorna True se a sintaxe estiver correta
 
 # Função para análise semântica
 def evaluate_expression(tokens):
-    expression = ''.join(str(token[1]) if token[0] == 'NUMBER' else token[1] for token in tokens)  # Converte a lista de tokens em uma string de expressão
+    expression = ''.join(str(token[1]) if token[0] == 'NUMBER' else ('-' if token[1] == 'u-' else token[1]) for token in tokens)  # Converte a lista de tokens em uma string
     try:
-        result = eval(expression)  # Tenta avaliar a expressão
-    except ZeroDivisionError:  # Se ocorrer uma divisão por zero
-        raise ZeroDivisionError("Divisão por zero")  # Levanta um erro de divisão por zero
-    return result  # Retorna o resultado da expressão
+        result = eval(expression)  # Avalia a expressão
+    except ZeroDivisionError:  # Captura a exceção de divisão por zero
+        raise ValueError("Erro semântico: divisão por zero")
+    except Exception as e:  # Captura outras exceções
+        raise ValueError(f"Erro semântico: {str(e)}")
+    return result  # Retorna o resultado
 
 # Programa principal
 if __name__ == "__main__":
