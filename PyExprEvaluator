@@ -1,84 +1,85 @@
-# Define uma lista de operadores suportados
-OPERATORS = ['+', '-', '*', '/', '(', ')', ';', '**', 'u-']  # Adiciona 'u-' para o operador unário '-'
+# Lista de operadores
+OPERATORS = ['+', '-', '*', '/', '(', ')', ';', '**', 'u-']
 
-# Função para análise léxica (tokenização)
+# Análise léxica (tokenização)
 def lexer(expression):
-    tokens = []  # Inicializa uma lista vazia para armazenar os tokens
-    current_token = ''  # Inicializa uma string vazia para o token atual
-    i = 0  # Inicializa um contador para iterar sobre a expressão
-    while i < len(expression):  # Loop enquanto o contador for menor que o comprimento da expressão
-        char = expression[i]  # Obtém o caractere atual da expressão
-        if char.isdigit() or char == '.':  # Se o caractere for um dígito ou um ponto
-            current_token += char  # Adiciona o caractere ao token atual
-        elif char in OPERATORS or char == ' ':  # Se o caractere for um operador ou um espaço
-            if current_token:  # Se o token atual não estiver vazio
-                if '.' in current_token:  # Se o token atual contém um ponto
-                    tokens.append(('NUMBER', float(current_token)))  # Adiciona o token como um número de ponto flutuante
+    tokens = []  
+    current_token = ''  
+    i = 0  
+    while i < len(expression):  
+        char = expression[i] 
+        if char.isdigit() or char == '.':  
+            current_token += char  
+        elif char in OPERATORS or char == ' ':  
+            if current_token:  
+                if '.' in current_token:  
+                    tokens.append(('NUMBER', float(current_token)))  
                 else:
-                    tokens.append(('NUMBER', int(current_token)))  # Adiciona o token como um número inteiro
-                current_token = ''  # Limpa o token atual
-            if char in OPERATORS:  # Se o caractere for um operador
+                    tokens.append(('NUMBER', int(current_token)))  
+                current_token = ''  
+            if char in OPERATORS:  
                 # Verifica se o próximo caractere forma um operador de dois caracteres
                 if i + 1 < len(expression) and expression[i:i+2] in OPERATORS:
-                    tokens.append(('OPERATOR', expression[i:i+2]))  # Adiciona o operador de dois caracteres
-                    i += 1  # Pula o próximo caractere
-                elif i + 1 < len(expression) and expression[i:i+2] == '- ':  # Se o próximo caractere é um espaço após um '-'
-                    tokens.append(('OPERATOR', 'u-'))  # Adiciona o operador unário '-'
-                    i += 1  # Pula o próximo caractere
+                    tokens.append(('OPERATOR', expression[i:i+2]))  
+                    i += 1  
+                elif i + 1 < len(expression) and expression[i:i+2] == '- ': 
+                    tokens.append(('OPERATOR', 'u-')) 
+                    i += 1  
                 else:
-                    tokens.append(('OPERATOR', char))  # Adiciona o operador de um caractere
-        i += 1  # Incrementa o contador
-    if current_token:  # Se o token atual não estiver vazio após o loop
-        if '.' in current_token:  # Se o token atual contém um ponto
-            tokens.append(('NUMBER', float(current_token)))  # Adiciona o token como um número de ponto flutuante
+                    tokens.append(('OPERATOR', char))  
+        i += 1  
+    if current_token:  
+        if '.' in current_token:  
+            tokens.append(('NUMBER', float(current_token)))  
         else:
-            tokens.append(('NUMBER', int(current_token)))  # Adiciona o token como um número inteiro
-    return tokens  # Retorna a lista de tokens
+            tokens.append(('NUMBER', int(current_token)))  
+    return tokens
 
-# Função para análise sintática
+# Análise sintática
 def parser(tokens):
-    if not tokens:  # Se a lista de tokens estiver vazia
-        return None  # Retorna None
+    if not tokens:  
+        return None  
 
-    parentheses = []  # Inicializa uma lista vazia para armazenar parênteses
-    for i, token in enumerate(tokens):  # Loop sobre a lista de tokens
-        if token[0] == 'NUMBER' and (i+1 < len(tokens) and tokens[i+1][0] != 'OPERATOR'):  # Se o token é um número e o próximo token não é um operador
-            raise SyntaxError("Erro de sintaxe: operador esperado")  # Levanta um erro de sintaxe
-        elif token[0] == 'OPERATOR':  # Se o token é um operador
-            if token[1] in OPERATORS:  # Se o operador está na lista de operadores suportados
-                if token[1] in ['(', ')']:  # Se o operador é um parêntese
-                    parentheses.append(token[1])  # Adiciona o parêntese à lista de parênteses
-                elif i+1 >= len(tokens) or tokens[i+1][0] != 'NUMBER':  # Se não há próximo token ou o próximo token não é um número
-                    if token[1] != 'u-':  # Se o operador não é o operador unário '-'
-                        raise SyntaxError("Erro de sintaxe: número esperado")  # Levanta um erro de sintaxe
-            else:  # Se o operador não está na lista de operadores suportados
-                raise SyntaxError("Erro de sintaxe: operador inválido")  # Levanta um erro de sintaxe
+    parentheses = []  
+    for i, token in enumerate(tokens): 
+        if token[0] == 'NUMBER' and (i+1 < len(tokens) and tokens[i+1][0] != 'OPERATOR'): 
+            raise SyntaxError("Erro de sintaxe: operador esperado")  
+        elif token[0] == 'OPERATOR':  
+            if token[1] in OPERATORS:  
+                if token[1] in ['(', ')']:  
+                    parentheses.append(token[1])  
+                elif i+1 >= len(tokens) or tokens[i+1][0] != 'NUMBER': 
+                    if token[1] != 'u-':  
+                        raise SyntaxError("Erro de sintaxe: número esperado")  
+            else:  
+                raise SyntaxError("Erro de sintaxe: operador inválido")  
     if parentheses.count('(') != parentheses.count(')'):
-        raise SyntaxError("Erro de sintaxe: parênteses desequilibrados")  # Levanta um erro de sintaxe
-    return True  # Retorna True se a sintaxe estiver correta
+        raise SyntaxError("Erro de sintaxe: parênteses desequilibrados") 
+    return True  
 
-# Função para análise semântica
+# Análise semântica
 def evaluate_expression(tokens):
-    expression = ''.join(str(token[1]) if token[0] == 'NUMBER' else ('-' if token[1] == 'u-' else token[1]) for token in tokens)  # Converte a lista de tokens em uma string
+    expression = ''.join(str(token[1]) if token[0] == 'NUMBER' else ('-' if token[1] == 'u-' else token[1]) for token in tokens)  
     try:
-        result = eval(expression)  # Avalia a expressão
-    except ZeroDivisionError:  # Captura a exceção de divisão por zero
+        result = eval(expression) 
+    except ZeroDivisionError: 
         raise ValueError("Erro semântico: divisão por zero")
-    except Exception as e:  # Captura outras exceções
+    except Exception as e: 
         raise ValueError(f"Erro semântico: {str(e)}")
-    return result  # Retorna o resultado
+    return result  
 
 # Programa principal
 if __name__ == "__main__":
-    expression = input("Digite uma expressão aritmética (+, -, *, /, (, ), **): ")  # Solicita ao usuário que insira uma expressão aritmética
-    tokens = lexer(expression)  # Tokeniza a expressão
-    print("Tokens:", tokens)  # Imprime a lista de tokens
+    expressions = input("Digite uma ou mais expressões aritméticas (+, -, *, /, (, ), **): ").split(';') 
+    for expression in expressions:
+        tokens = lexer(expression.strip())  
+        print("Tokens:", tokens)  
 
-    try:
-        parser_result = parser(tokens)  # Tenta analisar a sintaxe da lista de tokens
-        if parser_result:  # Se a sintaxe estiver correta
-            print("Análise sintática bem-sucedida.")  # Imprime uma mensagem de sucesso
-            result = evaluate_expression(tokens)  # Avalia a expressão
-            print("Resultado da expressão:", result)  # Imprime o resultado da expressão
-    except (SyntaxError, ZeroDivisionError) as e:  # Se ocorrer um erro de sintaxe ou de divisão por zero
-        print("Erro:", e)  # Imprime o erro
+        try:
+            parser_result = parser(tokens)
+            if parser_result: 
+                print("Análise sintática bem-sucedida.")  
+                result = evaluate_expression(tokens) 
+                print("Resultado da expressão:", result)  
+        except (SyntaxError, ZeroDivisionError) as e:  
+            print("Erro:", e)  
