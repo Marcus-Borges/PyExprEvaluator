@@ -1,3 +1,5 @@
+import time
+
 # Lista de operadores
 OPERATORS = ['+', '-', '*', '/', '(', ')', ';', '**', 'u-']
 
@@ -76,10 +78,14 @@ if __name__ == "__main__":
         print("Tokens:", tokens)  
 
         try:
+            start_time = time.time()
             parser_result = parser(tokens)
+            end_time = time.time()
             if parser_result: 
                 print("Análise sintática bem-sucedida.")  
                 result = evaluate_expression(tokens) 
                 print("Resultado da expressão:", result)  
         except (SyntaxError, ZeroDivisionError) as e:  
-            print("Erro:", e)  
+            print("Erro:", e)
+    
+    print(("CONSTRUÍDO COM SUCESSO. Tempo de execução: %s segundos" % round(end_time - start_time)))
